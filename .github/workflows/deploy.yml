@@ -18,12 +18,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
 
           script: |
-            cd /home/ubuntu/app
+            cd /home/ubuntu/app/nodejs-deploy-test
 
             git pull origin main
 
-            docker compose down
+            docker-compose down
 
-            docker compose build
+            docker-compose build
 
-            docker compose up -d
+            docker-compose up -d
