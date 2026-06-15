@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           BigInt    @id @default(autoincrement())
+  email        String    @unique(map: "email") @db.VarChar(50)
+  password     String    @db.VarChar(255)
+  name         String    @db.VarChar(100)
+  gender       Gender
+  birthDate    DateTime  @map("birth_date") @db.Date
+  address      String    @db.Text
+  phoneNumber  String?   @map("phone_num") @db.VarChar(20)
+  point        Int?
+  status       Int?
+  inactiveDate DateTime? @map("inactive_date")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.DateTime(6)
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  preferences   UserFoodCategory[]
+  reviews       Review[]
+  userMissions  UserMission[]
+  points        Point[]
+  images        UserImage[]
+
+  @@map("user")
+}
+
+enum Gender {
+  FEMALE
+  MALE
+}
+
+model FoodCategory {
+  id   BigInt @id @default(autoincrement())
+  name String @db.VarChar(20)
+
+  preferences UserFoodCategory[]
+
+  @@map("food_category")
+}
+
+model UserFoodCategory {
+  id     BigInt      @id @default(autoincrement())
+  user   User        @relation(fields: [userId], references: [id])
+  userId BigInt      @map("user_id")
+  food   FoodCategory @relation(fields: [foodId], references: [id])
+  foodId BigInt      @map("food_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  @@index([foodId])
+  @@index([userId])
+  @@map("user_food_category")
+}
+
+model Region {
+  id        BigInt   @id @default(autoincrement())
+  name      String   @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  stores Store[]
+
+  @@map("region")
+}
+
+model Store {
+  id        BigInt   @id @default(autoincrement())
+  region    Region   @relation(fields: [regionId], references: [id])
+  regionId  BigInt   @map("region_id")
+  name      String   @db.VarChar(20)
+  storeType String   @map("store_type") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  missions Mission[]
+  reviews  Review[]
+
+  @@index([regionId])
+  @@map("store")
+}
+
+model Mission {
+  id          BigInt   @id @default(autoincrement())
+  store       Store    @relation(fields: [storeId], references: [id])
+  storeId     BigInt   @map("store_id")
+  expireDate  DateTime @map("expire_date") @db.Date
+  description String   @db.Text
+  rewardPoint Int      @map("reward_point")
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  userMissions UserMission[]
+  points       Point[]
+
+  @@index([storeId])
+  @@map("mission")
+}
+
+model UserMission {
+  id        BigInt   @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    BigInt   @map("user_id")
+  mission   Mission  @relation(fields: [missionId], references: [id])
+  missionId BigInt   @map("mission_id")
+  status    Int
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  @@index([userId])
+  @@index([missionId])
+  @@map("user_mission")
+}
+
+model Point {
+  id          BigInt  @id @default(autoincrement())
+  user        User    @relation(fields: [userId], references: [id])
+  userId      BigInt  @map("user_id")
+  mission     Mission @relation(fields: [missionId], references: [id])
+  missionId   BigInt  @map("mission_id")
+  pointAmount Int     @map("point_amount")
+
+  @@index([userId])
+  @@index([missionId])
+  @@map("point")
+}
+
+model Review {
+  id        BigInt   @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    BigInt   @map("user_id")
+  store     Store    @relation(fields: [storeId], references: [id])
+  storeId   BigInt   @map("store_id")
+  content   String   @db.Text
+  starRate  Decimal  @map("star_rate") @db.Decimal(2, 1)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  images ReviewImage[]
+
+  @@index([userId])
+  @@index([storeId])
+  @@map("review")
+}
+
+model ReviewImage {
+  id        BigInt   @id @default(autoincrement())
+  review    Review   @relation(fields: [reviewId], references: [id])
+  reviewId  BigInt   @map("review_id")
+  imageUrl  String   @map("image_url") @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
+
+  @@index([reviewId])
+  @@map("review_image")
+}
+
+model UserImage {
+  id        BigInt   @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    BigInt   @map("user_id")
+  imageUrl  String   @map("image_url") @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
+
+  @@index([userId])
+  @@map("user_image")
+}
