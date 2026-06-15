@@ -10,20 +10,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
+      - name: Connect to EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-
           script: |
+            echo "Start Deployment"
+
+            echo "Move to project directory"
             cd /home/ubuntu/app
 
+            echo "Pull latest code from GitHub"
             git pull origin main
 
+            echo "Stop existing containers"
             docker compose down
 
+            echo "Build Docker image"
             docker compose build
 
+            echo "Start containers"
             docker compose up -d
+
+            echo "Deployment Success"
